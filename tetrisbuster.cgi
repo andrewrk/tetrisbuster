@@ -72,6 +72,12 @@ def doMove(board, piece, position, rot):
 		
 		y += 1
 	
+	# delete complete rows
+	new_board = filter(lambda row: any(item != '.' for item in row), new_board)
+	for i in range(board_height-len(new_board)):
+		new_board.insert(0, '.' * board_width)
+	
+	
 	if y == 0:
 		# cannot place piece; return illegal move
 		return (board, False,)
