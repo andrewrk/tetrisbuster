@@ -67,7 +67,7 @@ def doMove(board, piece, position, rot):
 		#print "trying %s at (%i, %i) with rotation %i" % (piece, position,y, rot*90)
 		new_board, legal = canPutPiece(board, piece, position, y, rot)
 		if not legal:
-#			#print "can't put %s at (%i, %i) with rotation %i" % (piece, position, y, rot*90)
+			#print "can't put %s at (%i, %i) with rotation %i" % (piece, position, y, rot*90)
 			break
 		
 		y += 1
@@ -80,6 +80,7 @@ def doMove(board, piece, position, rot):
 	
 	if y == 0:
 		# cannot place piece; return illegal move
+		#print "can't put %s at %i with rotation %i" % (piece, position, rot*90)
 		return (board, False,)
 	else:
 		# put the changes into board
@@ -102,23 +103,28 @@ if form.has_key("piece") and form.has_key("board"):
 
 	#print "initial board:"
 	#print board
-	# try every combination and record the minimum board height of each try	
+	# try every combination and compute a score for that combo.
 	combos = {}
 	for x in range(board_width):
 		for rot in range(4):
 			#print "trying position %i, %i degrees" % (x, rot*90)
 			new_board, legal = doMove(board, piece, x, rot)
 			if legal:
-				# determine the height of new_board
-				h = boardHeight(new_board)
+				# determine how many points this board is worth
+				# negative score for each block, blocks toward the bottom
+				# don't hurt as much
+				pts = 0
+				for by in range(board_height):
+					pts += sum(-10*(board_height-by) for char in new_board[by] if char != ".")
+				#print "position %i, rotation %i is %i points" % (x, rot*90, pts)
 				#print "height: %i" % h
-				combos[h] = [x, rot]
+				combos[pts] = [x, rot]
 			#else:
 				#print "not legal"
 	
 	# best combo is lowest key
 	keys = combos.keys()
-	keys.sort()
+	keys.sort(reverse=True)
 	open('lastrun.txt', 'a').write("\n---------------------\nboard: %s\npiece: %s\n combos: %s" % (board, piece, combos))
 	
 	if len(keys) == 0:
