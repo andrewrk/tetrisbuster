@@ -31,18 +31,6 @@ def canPutPiece(board, piece, left, top, rot):
 			if pieces[piece][rot][y][x]:
 				if by >= board_height or bx >= board_width or \
 				bx < 0 or by < 0 or board[by][bx] != '.':
-					reason = "something funny is going on..."
-					if by >= board_height:
-						reason = "y >= board_height"
-					elif bx >= board_width:
-						reason = "x >= board_width"
-					elif bx < 0:
-						reason = "x < 0"
-					elif by < 0:
-						reason = "y < 0"
-					elif board[by][bx] != '.':
-						reason = "board[by][bx] = %s" % board[by][bx]
-					
 					return (board, False,) # illegal move
 				else:
 					row = list(new_board[by])
