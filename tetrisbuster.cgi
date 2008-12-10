@@ -46,7 +46,7 @@ def doMove(board, piece, position, rot):
 	# move piece down until we can't anymore
 	new_board = board[:]
 	while True:
-		old_board = new_board[:]
+		ret_board = new_board[:]
 		new_board, legal = canPutPiece(board, piece, position, y, rot)
 		if not legal:
 			break
@@ -54,9 +54,9 @@ def doMove(board, piece, position, rot):
 		y += 1
 	
 	# delete complete rows
-	new_board = filter(lambda row: any(item != '.' for item in row), new_board)
-	for i in range(board_height-len(new_board)):
-		new_board.insert(0, '.' * board_width)
+	ret_board = filter(lambda row: any(item == '.' for item in row), ret_board)
+	for i in range(board_height-len(ret_board)):
+		ret_board.insert(0, '.' * board_width)
 	
 	
 	if y == 0:
@@ -64,12 +64,14 @@ def doMove(board, piece, position, rot):
 		return (board, False,)
 	else:
 		# put the changes into board
-		return (old_board, True,) # 'True' - move is legal
+		return (ret_board, True,) # 'True' - move is legal
 
 form = cgi.FieldStorage()
 if form.has_key("piece") and form.has_key("board"):
 	board = form['board'].value.decode("utf-8").encode("ascii", "ignore").split()
 	piece = form['piece'].value.decode("utf-8").encode("ascii", "ignore")
+
+	outstr = ""
 
 	# try every combination and compute a score for that combo.
 	combos = {}
@@ -78,17 +80,31 @@ if form.has_key("piece") and form.has_key("board"):
 			new_board, legal = doMove(board, piece, x, rot)
 			if legal:
 				# determine how many points this board is worth
-				# negative score for each block, blocks toward the bottom
-				# don't hurt as much
 				pts = 0
 				for by in range(board_height):
+					# negative score for each block, blocks toward the bottom
+					# don't hurt as much
 					pts += sum(-10*(board_height-by) for char in new_board[by] if char != ".")
+					# find holes and give them a penalty
+					for bx in range(board_width):
+						if new_board[by][bx] == '.':
+							# see if there is a block anywhere above it
+							for check_y in range(by):
+								if new_board[check_y][bx] != ".":
+									pts -= 30 * (board_height-check_y)
+									break
+
 				combos[pts] = [x, rot]
 	
 	# best combo is lowest key
 	keys = combos.keys()
 	keys.sort(reverse=True)
-	open('lastrun.txt', 'a').write("\n---------------------\nboard: %s\npiece: %s\n combos: %s" % (board, piece, combos))
+
+	# log
+	if len(keys) > 0:
+		new_board, legal = doMove(board, piece, combos[keys[0]][0],  combos[keys[0]][1])
+		outstr += "\nexpected board:\n%s" % '\n'.join(new_board)
+	open('lastrun.txt', 'a').write("\n---------------------\nboard:\n%s\npiece: %s\n combos: %s\noutstr: %s\n" % ('\n'.join(board), piece, combos, outstr))
 	
 	if len(keys) == 0:
 		# random, we're about to lose
