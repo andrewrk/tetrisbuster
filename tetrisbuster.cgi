@@ -91,7 +91,7 @@ if form.has_key("piece") and form.has_key("board"):
 							# see if there is a block anywhere above it
 							for check_y in range(by):
 								if new_board[check_y][bx] != ".":
-									pts -= 30 * (board_height-check_y)
+									pts -= 50 * (board_height-check_y)
 									break
 
 				combos[pts] = [x, rot]
